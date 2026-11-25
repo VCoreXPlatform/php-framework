@@ -1,0 +1,9 @@
+/.env
+/vendor/
+/node_modules/
+/public/assets/*
+!/public/assets/.gitignore
+/storage/logs/*
+!/storage/logs/.gitignore
+/storage/cache/*
+!/storage/cache/.gitignore
