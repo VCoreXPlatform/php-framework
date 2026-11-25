@@ -53,7 +53,7 @@ function App() {
       </section>
       <section className="start" id="start" aria-labelledby="start-title">
         <h2 id="start-title">Быстрый старт</h2>
-        <pre><code>{'composer create-project vcorexplatform/framework new_project\ncd new_project\nnpm ci\nnpm run build\nphp -S 127.0.0.1:18080 -t public deploy/dev-router.php'}</code></pre>
+        <pre><code>{'composer create-project vcorexplatform/framework new_project\ncd new_project\nnpm ci\nnpm run build\nphp bin/framework serve'}</code></pre>
         <p>Открой <code>http://127.0.0.1:18080/</code>. Для стартовой страницы база данных не требуется.</p>
       </section>
     </main>

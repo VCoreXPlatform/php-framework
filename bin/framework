@@ -13,9 +13,28 @@ require $root . '/vendor/autoload.php';
 try {
     $command = $argv[1] ?? 'help';
     if ($command === 'help') {
+        echo "php bin/framework serve\n";
         echo "php bin/framework make:controller ExampleController\n";
         echo "php bin/framework migrate\nphp bin/framework migrate:status\n";
         exit(0);
+    }
+    if ($command === 'serve') {
+        if (isset($argv[2])) {
+            throw new InvalidArgumentException('Usage: php bin/framework serve');
+        }
+
+        $address = '127.0.0.1:18080';
+        $server = proc_open(
+            [PHP_BINARY, '-S', $address, '-t', 'public', 'deploy/dev-router.php'],
+            [STDIN, STDOUT, STDERR],
+            $pipes,
+            $root,
+        );
+        if (!is_resource($server)) {
+            throw new RuntimeException("Could not launch the development server on {$address}");
+        }
+
+        exit(proc_close($server));
     }
     if ($command === 'make:controller') {
         $name = $argv[2] ?? '';

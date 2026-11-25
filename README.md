@@ -22,10 +22,12 @@ composer create-project vcorexplatform/framework new_project
 cd new_project
 npm ci
 npm run build
-php -S 127.0.0.1:18080 -t public deploy/dev-router.php
+php bin/framework serve
 ```
 
 Откройте [стартовую страницу](http://127.0.0.1:18080/). Она показывает статус PHP API и команды быстрого старта. Для работы стартовой страницы база данных не требуется.
+
+Сервер слушает только 127.0.0.1:18080. Для остановки нажмите Ctrl+C.
 
 Для разработки интерфейса запустите npm run dev рядом с PHP-сервером и откройте [Vite](http://127.0.0.1:15173/assets/). Vite проксирует /api на порт 18080.
 
