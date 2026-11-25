@@ -6,7 +6,7 @@
 
 | Пакет | Назначение |
 | --- | --- |
-| `vcorexplatform/framework` | Шаблон приложения с PHP, React и демо API |
+| `vcorexplatform/framework` | Шаблон приложения с React-лендингом и проверкой PHP API |
 | `vcorexplatform/core` | MVC, DI, маршрутизация, конфигурация и модели RedBeanPHP |
 | `vcorexplatform/session` | `Core\Http\Session`, PHP-сессии и cookie |
 | `vcorexplatform/http-client` | `Core\Http\HttpClient`, Guzzle и фильтрация исходящих запросов |
@@ -29,51 +29,34 @@ composer create-project "--repository=$repo" vcorexplatform/framework ../new_pro
 
 ## Запуск
 
-Нужны PHP 8.4+ с `pdo_mysql`, Composer, Node.js 24 и MySQL либо MariaDB. Выполните из корня проекта.
+Нужны PHP 8.4+ с расширениями pdo_mysql и session, Composer и Node.js 24.
 
 ```sh
-composer install
+composer create-project vcorexplatform/framework new_project
+cd new_project
 npm ci
 npm run build
-```
-
-Скопируйте `.env.example` в `.env` (PowerShell: `Copy-Item .env.example .env`). Создайте пустую базу и пользователя с доступом к ней. Укажите параметры подключения в `.env` и импортируйте `database/schema.sql` через клиент MySQL или MariaDB.
-
-```sh
 php -S 127.0.0.1:18080 -t public deploy/dev-router.php
 ```
 
-Откройте `http://127.0.0.1:18080/notes`. Страница показывает состояние PHP API и позволяет просматривать, создавать, изменять и удалять заметки. Для разработки интерфейса запустите `npm run dev` рядом с PHP-сервером и откройте `http://127.0.0.1:15173/assets/`. Vite проксирует `/api` на порт 18080.
+Откройте [стартовую страницу](http://127.0.0.1:18080/). Она показывает статус PHP API и команды быстрого старта. Для работы стартовой страницы база данных не требуется.
 
-## API
+Для разработки интерфейса запустите npm run dev рядом с PHP-сервером и откройте [Vite](http://127.0.0.1:15173/assets/). Vite проксирует /api на порт 18080.
+
+## Маршруты шаблона
 
 | Метод и путь | Результат |
 | --- | --- |
-| `GET /api/health` | Проверка PHP без подключения к БД |
-| `GET /api/notes?page=1&per_page=20` | Список и параметры пагинации |
-| `POST /api/notes` | Создание, статус 201 и заголовок Location |
-| `GET /api/notes/{id}` | Чтение |
-| `PUT /api/notes/{id}` | Замена полей |
-| `PATCH /api/notes/{id}` | Изменение переданных полей |
-| `DELETE /api/notes/{id}` | Удаление, статус 204 |
+| GET / | React-страница быстрого старта |
+| GET /api/health | Ответ 200 с JSON `{"status":"ok"}` |
 
-На запись можно передавать JSON-объект с полями `title` и `body`. Ошибки возвращаются в формате `{"error":"..."}`. Неизвестный путь API возвращает 404, неподдерживаемый метод известного пути — 405 с заголовком Allow. PHP отдаёт React-страницу по `/` и `/notes`.
+Для проверки API откройте [GET /api/health](http://127.0.0.1:18080/api/health). Неизвестный путь возвращает 404. Для известного пути с неподдерживаемым методом возвращается 405.
 
 ## Расширение ядра
 
 В `routes/api.php` и `routes/web.php` регистрируются обработчики. В параметр `{id}` маршрутизатор передаёт строку. Контейнер внедряет `Request` в методы и зависимости по типу в конструкторы. Интерфейсы связываются с реализациями через фабрики `Container::singleton()`. Класс middleware реализует `Core\Http\Middleware` и может изменить ответ или вернуть его досрочно.
 
-Модели наследуют `Core\Model` и задают `TABLE` и `FILLABLE`. Контейнер внедряет в них `Database`. Пример использования внедрённых `Note $notes` и `Database $db`:
-
-```php
-$note = $notes->create(['title' => 'Черновик', 'body' => 'Текст']);
-$notes->update((int) $note['id'], ['body' => 'Новая версия']);
-$page = $notes->where('title', 'Черновик')->orderBy('id', 'desc')->paginate(1, 10);
-
-$db->transaction(function () use ($notes, $note): void {
-    $notes->delete((int) $note['id']);
-});
-```
+Если приложению нужна БД, скопируйте .env.example в .env, заведите базу MySQL или MariaDB и заполните параметры DB_*. Создайте схему приложения. Модели наследуют Core\Model и задают TABLE и FILLABLE. Контейнер внедряет Database. Соединение открывается при первом обращении к модели.
 
 Присваиваются только поля из `FILLABLE`, ID защищён. Фильтры используют параметры SQL. Транзакции работают с замороженной схемой и таблицами InnoDB. При исключении выполняется rollback. Вложенные транзакции отклоняются.
 
@@ -139,7 +122,7 @@ set(), get(), has() и remove() сами запускают сессию при 
 
 В `deploy/` лежат примеры конфигурации Nginx и Apache. Подставьте абсолютный путь проекта вместо `/srv/framework` и адрес PHP-FPM или FastCGI вместо `127.0.0.1:9000`. Для Apache включите модули `rewrite`, `proxy`, `proxy_fcgi`, `authz_core` и `mime`. Корень веб-сервера — `public/`. Процесс PHP должен иметь право записи в `storage/logs/`.
 
-Установите `APP_ENV=production` и `APP_DEBUG=false`. В production RedBeanPHP всегда работает с замороженной схемой. Схему обновляйте от отдельной учётной записи с правами DDL. Журнал исключений записывается в `storage/logs/app.log`. Демонстрационный API заметок доступен без авторизации, поэтому для общедоступного приложения удалите демомаршруты или ограничьте к ним доступ.
+Установите `APP_ENV=production` и `APP_DEBUG=false`. В production RedBeanPHP всегда работает с замороженной схемой. Схему обновляйте от отдельной учётной записи с правами DDL. Журнал исключений записывается в `storage/logs/app.log`.
 
 ## Проверки
 
