@@ -1,6 +1,6 @@
 # PHP Framework
 
-Легковесная основа MVC на PHP 8.4+, RedBeanPHP и React. Код приложения находится в `app/`, ядро — в `packages/core/src/`. Composer загружает пространства имён `App\` и `Core\` по PSR-4.
+Легковесная основа MVC на PHP 8.4+, RedBeanPHP и React. Код приложения находится в `app/`, ядро устанавливается через Composer. Composer загружает пространства имён `App\` и `Core\` по PSR-4.
 
 ## Composer-пакеты
 
@@ -11,21 +11,7 @@
 | `vcorexplatform/session` | `Core\Http\Session`, PHP-сессии и cookie |
 | `vcorexplatform/http-client` | `Core\Http\HttpClient`, Guzzle и фильтрация исходящих запросов |
 
-В распакованном шаблоне достаточно выполнить `composer install`. Composer устанавливает библиотеки из `packages/*` в `vendor/starter/`. В шаблоне сессии и HTTP-клиент включены по умолчанию. Если компонент не нужен, его можно удалить через `composer remove vcorexplatform/session` и вернуть через `composer require vcorexplatform/session:^1.0`. То же действует для `vcorexplatform/http-client`. Регистрация сервисов находится в `bootstrap/services.php`.
-
-Чтобы из локального шаблона создать соседнюю папку `new_project`, выполните в PowerShell из каталога шаблона:
-
-```powershell
-$repo = @{
-    type = 'path'
-    url = (Get-Location).Path.Replace('\', '/')
-    options = @{ symlink = $false; versions = @{ 'vcorexplatform/framework' = '1.0.0' } }
-} | ConvertTo-Json -Depth 5 -Compress
-composer create-project "--repository=$repo" vcorexplatform/framework ../new_project 1.0.0
-```
-
-После регистрации имени и публикации шаблона в Packagist создание проекта сводится к `composer create-project vcorexplatform/framework new_project`. Для отдельной публикации библиотек используется содержимое соответствующих каталогов `packages/` и версия из Git-тега. После публикации библиотек можно убрать локальный `path`-репозиторий в шаблоне и заново сформировать его `composer.lock` для установки из реестра. Для установки опубликованных библиотек в существующее приложение используется `composer require vcorexplatform/session vcorexplatform/http-client`. [Команды Composer](https://getcomposer.org/doc/03-cli.md#create-project)
-
+Composer скачивает ядро и модули из Packagist. Сессии и HTTP-клиент включены в шаблон по умолчанию. Регистрация сервисов находится в bootstrap/services.php.
 
 ## Запуск
 
@@ -117,6 +103,62 @@ public function rememberTheme(): Response
 set(), get(), has() и remove() сами запускают сессию при первом обращении. Для явного запуска вызовите start() до отправки заголовков. close() сохраняет данные и освобождает блокировку файла до конца запроса. destroy() удаляет сессию и отправляет браузеру просроченную cookie.
 
 В браузере хранится только идентификатор FRAMEWORKSID. Cookie выставляется с HttpOnly и SameSite=Lax, а в production и при прямом HTTPS также с Secure. Production требует HTTPS для работы cookie. Данные сохраняются в storage/sessions/, поэтому процесс PHP должен иметь право записи в этот каталог. Для работы через обычный HTTP локально используйте APP_ENV=development. [Параметры безопасности сессий PHP](https://www.php.net/manual/en/session.security.ini.php)
+
+## Валидация
+
+В контроллере используйте `$request->validate($rules)` для JSON и форм и `$request->validateQuery($rules)` для query. Результат содержит только поля из правил.
+
+```php
+$data = $request->validate(['email' => 'required|string|max:254|email']);
+$query = $request->validateQuery(['page' => 'integer|min:1']);
+```
+
+Правила включают `required`, `nullable`, `string`, `integer`, `boolean`, `array`, `email`, `min:N` и `max:N`. Указывайте тип перед ограничением. Ошибки возвращаются со статусом 422 и объектом `errors`. Строки измеряются в символах Unicode.
+
+## CLI и миграции
+
+```sh
+php bin/framework make:controller ExampleController
+php bin/framework migrate:status
+php bin/framework migrate
+```
+
+Помещайте по одному SQL-выражению в каждый файл в `database/migrations/`. Пример имени файла — `202611250100_create_products.sql`. Для миграций задайте подключение к MySQL или MariaDB и пользователя с правами DDL. Команда проверяет контрольные суммы и пропускает уже применённые файлы. Если выполнение прервалось, состояние `dirty` блокирует следующий запуск. Сверьте и исправьте фактическую схему перед исправлением записи журнала. [Правила DDL в MySQL](https://dev.mysql.com/doc/refman/8.4/en/implicit-commit.html) · [Правила DDL в MariaDB](https://mariadb.com/docs/server/reference/sql-statements/transactions/sql-statements-that-cause-an-implicit-commit)
+
+## Авторизация
+
+Установите пакет в корне проекта:
+
+```sh
+composer require vcorexplatform/auth:^1.0
+php bin/framework migrate
+```
+
+Укажите параметры БД, предоставьте процессу PHP права записи в `storage/cache/` и `storage/sessions/`. Для production нужен HTTPS. При нескольких экземплярах приложения храните сессии и счётчики попыток в общих каталогах с поддержкой блокировок. Идентификатор клиента берётся из `REMOTE_ADDR`. Настройте его на уровне доверенного прокси, если приложение развёрнуто за ним.
+
+| Метод и путь | Вход и результат |
+| --- | --- |
+| GET /api/auth/csrf | Выдаёт `csrf_token` |
+| POST /api/auth/register | `email`, `password`. Возвращает аккаунт и код восстановления |
+| POST /api/auth/login | `email`, `password`. Создаёт авторизованную сессию и выдаёт новый `csrf_token` |
+| GET /api/auth/me | Возвращает аккаунт или 401 |
+| POST /api/auth/logout | Завершает сессию |
+| POST /api/auth/forgot-password | `email`. Запрашивает доставку временного токена при наличии транспорта |
+| POST /api/auth/reset-password | `email`, `token`, новый `password`. Возвращает новый код восстановления |
+
+Для каждого POST передавайте cookie и заголовок `X-CSRF-Token`. После входа используйте токен из ответа. Пароль при создании и смене должен занимать 12–72 байта. Покажите пользователю код восстановления из поля `recovery_code`, чтобы он мог сохранить его. При смене пароля код заменяется, предыдущие сессии отзываются.
+
+Для доставки токена по почте реализуйте `VCoreX\Auth\ResetDelivery::enqueue(string $email, string $token)` и передайте объект третьим аргументом в фабрике Auth в `bootstrap/services.php`. Используйте доверенный HTTPS-адрес приложения для ссылки. Срок действия токена — 15 минут. При отсутствии транспорта восстановление работает по сохранённому коду. Чтобы защитить собственные маршруты, добавьте `VCoreX\Auth\RequireAuth::class` в middleware группы. [Безопасность сессий PHP](https://www.php.net/manual/en/features.session.security.management.php)
+
+## HTTP-тестирование
+
+```php
+$http = new Core\Testing\HttpClient(Core\Application::boot($root));
+$http->getJson('/api/health')->assertStatus(200)->assertJson(['status' => 'ok']);
+```
+
+Для сессий можно привязать `Core\Http\ArraySession` к `Core\Http\SessionStore::class` в тестовом контейнере. Запустите `composer test` для проверки валидации и HTTP-клиента. После установки Auth и миграций в отдельной тестовой БД запустите `php tests/auth.php`.
+
 
 ## Развёртывание
 

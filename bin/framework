@@ -1,0 +1,79 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Core\Config\Config;
+use Core\DB\Database;
+use VCoreX\Auth\Auth;
+
+$root = dirname(__DIR__);
+require $root . '/vendor/autoload.php';
+
+try {
+    $command = $argv[1] ?? 'help';
+    if ($command === 'help') {
+        echo "php bin/framework make:controller ExampleController\n";
+        echo "php bin/framework migrate\nphp bin/framework migrate:status\n";
+        exit(0);
+    }
+    if ($command === 'make:controller') {
+        $name = $argv[2] ?? '';
+        if (!preg_match('/\A[A-Z][A-Za-z0-9]{0,63}Controller\z/', $name)) {
+            throw new InvalidArgumentException('Expected a class name such as ExampleController');
+        }
+        $path = $root . "/app/Controller/{$name}.php";
+        $file = @fopen($path, 'xb');
+        if ($file === false) {
+            throw new RuntimeException("Cannot create {$path}. The file may already exist");
+        }
+        try {
+            $content = <<<PHP
+            <?php
+
+            declare(strict_types=1);
+
+            namespace App\Controller;
+
+            use Core\Controller;
+            use Core\Http\Response;
+
+            final class {$name} extends Controller
+            {
+                public function index(): Response
+                {
+                    return \$this->json(['status' => 'ok']);
+                }
+            }
+            PHP;
+            if (fwrite($file, $content . PHP_EOL) !== strlen($content . PHP_EOL)) {
+                throw new RuntimeException("Could not write {$path}");
+            }
+        } finally {
+            fclose($file);
+        }
+        echo "Created app/Controller/{$name}.php\n";
+        exit(0);
+    }
+    if (!in_array($command, ['migrate', 'migrate:status'], true)) {
+        throw new InvalidArgumentException("Unknown command: {$command}");
+    }
+
+    $directories = [$root . '/database/migrations'];
+    if (class_exists(Auth::class)) {
+        $directories[] = Auth::migrationDirectory();
+    }
+    $migrations = Database::fromConfig(Config::load($root))->migrations($directories);
+    if ($command === 'migrate:status') {
+        foreach ($migrations->status() as $name => $state) {
+            echo "{$state}\t{$name}\n";
+        }
+    } else {
+        foreach ($migrations->migrate() as $name) {
+            echo "Applied {$name}\n";
+        }
+    }
+} catch (Throwable $error) {
+    fwrite(STDERR, $error->getMessage() . PHP_EOL);
+    exit(1);
+}

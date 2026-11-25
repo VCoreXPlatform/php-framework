@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e97a12ee23284e491f444b65f2bcab3c",
+    "content-hash": "b96a52d9b59f33a694fed52ef31592dc",
     "packages": [
         {
             "name": "gabordemooij/redbean",
@@ -1065,11 +1065,17 @@
         },
         {
             "name": "vcorexplatform/core",
-            "version": "1.0.0",
+            "version": "v1.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/VCoreXPlatform/php-framework-core.git",
+                "reference": "516c288817b5d33dde8fc7959634e00be8b97ebf"
+            },
             "dist": {
-                "type": "path",
-                "url": "packages/core",
-                "reference": "a67d4b943ef69bf4a3a5403f0d74de9a75061e44"
+                "type": "zip",
+                "url": "https://api.github.com/repos/VCoreXPlatform/php-framework-core/zipball/516c288817b5d33dde8fc7959634e00be8b97ebf",
+                "reference": "516c288817b5d33dde8fc7959634e00be8b97ebf",
+                "shasum": ""
             },
             "require": {
                 "ext-pdo": "*",
@@ -1084,19 +1090,28 @@
                     "Core\\": "src/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "description": "Starter MVC core with RedBeanPHP",
-            "transport-options": {
-                "symlink": false,
-                "relative": true
-            }
+            "support": {
+                "issues": "https://github.com/VCoreXPlatform/php-framework-core/issues",
+                "source": "https://github.com/VCoreXPlatform/php-framework-core/tree/v1.1.0"
+            },
+            "time": "2026-11-25T04:26:51+00:00",
+            "published-time": "2026-11-25T04:27:32+00:00"
         },
         {
             "name": "vcorexplatform/http-client",
-            "version": "1.0.0",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/VCoreXPlatform/php-framework-http-client.git",
+                "reference": "e4d32dc2f7b8ce26895404a4c43564ff7512fc8b"
+            },
             "dist": {
-                "type": "path",
-                "url": "packages/http-client",
-                "reference": "40830ee770afdc43a74313090943afac474663bc"
+                "type": "zip",
+                "url": "https://api.github.com/repos/VCoreXPlatform/php-framework-http-client/zipball/e4d32dc2f7b8ce26895404a4c43564ff7512fc8b",
+                "reference": "e4d32dc2f7b8ce26895404a4c43564ff7512fc8b",
+                "shasum": ""
             },
             "require": {
                 "guzzlehttp/guzzle": "^7",
@@ -1108,19 +1123,28 @@
                     "Core\\Http\\": "src/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "description": "Filtered outbound HTTP client for Starter",
-            "transport-options": {
-                "symlink": false,
-                "relative": true
-            }
+            "support": {
+                "issues": "https://github.com/VCoreXPlatform/php-framework-http-client/issues",
+                "source": "https://github.com/VCoreXPlatform/php-framework-http-client/tree/v1.0.0"
+            },
+            "time": "2026-11-25T01:50:02+00:00",
+            "published-time": "2026-11-25T01:54:59+00:00"
         },
         {
             "name": "vcorexplatform/session",
-            "version": "1.0.0",
+            "version": "v1.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/VCoreXPlatform/php-framework-session.git",
+                "reference": "e626757a32def1eac4ebe853298c8c6802fbb8b6"
+            },
             "dist": {
-                "type": "path",
-                "url": "packages/session",
-                "reference": "382f659cc60977b462842fe118c6fecb28e7ed73"
+                "type": "zip",
+                "url": "https://api.github.com/repos/VCoreXPlatform/php-framework-session/zipball/e626757a32def1eac4ebe853298c8c6802fbb8b6",
+                "reference": "e626757a32def1eac4ebe853298c8c6802fbb8b6",
+                "shasum": ""
             },
             "require": {
                 "ext-session": "*",
@@ -1132,11 +1156,14 @@
                     "Core\\Http\\": "src/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "description": "Cookie-based PHP sessions for Starter",
-            "transport-options": {
-                "symlink": false,
-                "relative": true
-            }
+            "support": {
+                "issues": "https://github.com/VCoreXPlatform/php-framework-session/issues",
+                "source": "https://github.com/VCoreXPlatform/php-framework-session/tree/v1.1.0"
+            },
+            "time": "2026-11-25T04:26:52+00:00",
+            "published-time": "2026-11-25T04:27:41+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
